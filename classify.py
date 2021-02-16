@@ -14,7 +14,7 @@ from sklearn.naive_bayes import ComplementNB
 from sklearn.model_selection import cross_validate, cross_val_score
 from sklearn.model_selection import GridSearchCV
 import numpy as np
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 import pandas as pd
 
 import pretraitement
@@ -25,6 +25,9 @@ def main():
 	parser = argparse.ArgumentParser(description="Classification des opinions")
 	parser.add_argument("-v", "--verbose", help="verbose mode", action="store_true")
 	parser.add_argument("file_in", help="le fichier tsv")
+	parser.add_argument("pretmnt", help="le pretraitement: A, B ou C")
+	parser.add_argument("feats", help="le features: TFIDF, BOW ou 4Features")
+	parser.add_argument("algo", help="l'algorithme: LinearSVC, GaussianNB ou ComplementNB")
 	args = parser.parse_args()
 
 	# Transformer le fichier tsv au pandas dataframe
@@ -42,19 +45,33 @@ def main():
 	C : Comme A, avec suppression de stopwords (list_stopwords.txt)
 	'''
 
-	# A : Normalisation, tokenization et lemmatisation
-	print("Normalisation, tokenization et lemmatisation...")
-	corpus['opinion'] = [pretraitement.normalize(texte) for texte in corpus['texte']]
-	corpus['opinion'] = [pretraitement.tokenize(texte) for texte in corpus['opinion']]
-	corpus['opinion'] = [pretraitement.lemmatize(texte) for texte in corpus['opinion']]
+	if args.pretmnt == 'A':
+		# A : Normalisation, tokenization et lemmatisation
+		print("Normalisation, tokenization et lemmatisation...")
+		corpus['opinion'] = [pretraitement.normalize(texte) for texte in corpus['texte']]
+		corpus['opinion'] = [pretraitement.tokenize(texte) for texte in corpus['opinion']]
+		corpus['opinion'] = [pretraitement.lemmatize(texte) for texte in corpus['opinion']]
 
-	# B : Avec suppression des stopwords NLTK
-	# print("Suppression des stopwords avec nltkstopwords...")
-	# corpus['opinion'] = [pretraitement.nltkstopwords(texte) for texte in corpus['opinion']]
+	if args.pretmnt == 'B':
+		print("Normalisation, tokenization et lemmatisation...")
+		corpus['opinion'] = [pretraitement.normalize(texte) for texte in corpus['texte']]
+		corpus['opinion'] = [pretraitement.tokenize(texte) for texte in corpus['opinion']]
+		corpus['opinion'] = [pretraitement.lemmatize(texte) for texte in corpus['opinion']]
 
-	# C : Avec suppression des stopwords (list_stopwords.txt)
-	# print("Suppression des stopwords avec notre list_stopwords.txt...")
-	# corpus['opinion'] = [pretraitement.sans_stopwords(texte) for texte in corpus['opinion']]
+		# B : Avec suppression des stopwords NLTK
+		print("Suppression des stopwords avec nltkstopwords...")
+		corpus['opinion'] = [pretraitement.nltkstopwords(texte) for texte in corpus['opinion']]
+
+	if args.pretmnt == 'C':
+		print("Normalisation, tokenization et lemmatisation...")
+		corpus['opinion'] = [pretraitement.normalize(texte) for texte in corpus['texte']]
+		corpus['opinion'] = [pretraitement.tokenize(texte) for texte in corpus['opinion']]
+		corpus['opinion'] = [pretraitement.lemmatize(texte) for texte in corpus['opinion']]
+
+		# C : Avec suppression des stopwords (list_stopwords.txt)
+		print("Suppression des stopwords avec notre list_stopwords.txt...")
+		corpus['opinion'] = [pretraitement.sans_stopwords(texte) for texte in corpus['opinion']]
+	
 
 	# Extraction des valeurs des notes pour chaque opinion
 	print("Extraction des valeurs pour y...")
@@ -68,30 +85,33 @@ def main():
 	X : 4Features: Longueur des opinions, Nombres des mots, Longueur moyenne des mots, Nombres d'adjectif dans les opinions
 	'''
 
-	# A : TF-IDF, la base
-	print("Extraction des features (TF-IDF)...")
-	X = features.tfidfvectorize(corpus['opinion'])
+	if args.feats == "TFIDF":
+		# A : TF-IDF, la base
+		print("Extraction des features (TF-IDF)...")
+		X = features.tfidfvectorize(corpus['opinion'])
 
-	# B : Bag of Words
-	# print("Extraction des features (Bag of Words)...")
-	# X = features.countvectorize(corpus['opinion'])
+	if args.feats == "BOW":
+		# B : Bag of Words
+		print("Extraction des features (Bag of Words)...")
+		X = features.countvectorize(corpus['opinion'])
 
-	# C : Longueur des opinions
-	# print("Extraction des features (Longueur des opinions)...")
-	# corpus['character_cnt'] = corpus['opinion'].str.len()
-	# D : Nombres des mots
-	# print("Extraction des features (Nombres des mots)...")
-	# corpus['word_cnt'] = corpus['opinion'].str.split().str.len()
-	# E : Longueur moyenne des mots
-	# print("Extraction des features (Longueur moyenne des mots)...")
-	# corpus['characters_per_word'] = corpus['character_cnt']/corpus['word_cnt']
-	# F : Nombres d'adjectif dans les opinions
-	# print("Extraction des features (Nombres d'adjectif dans les opinions)...")
-	# nb_adj= features.count_adj(corpus['opinion'])
+	if args.feats == "4Features":
+		# C : Longueur des opinions
+		print("Extraction des features (Longueur des opinions)...")
+		corpus['character_cnt'] = corpus['opinion'].str.len()
+		# D : Nombres des mots
+		print("Extraction des features (Nombres des mots)...")
+		corpus['word_cnt'] = corpus['opinion'].str.split().str.len()
+		# E : Longueur moyenne des mots
+		print("Extraction des features (Longueur moyenne des mots)...")
+		corpus['characters_per_word'] = corpus['character_cnt']/corpus['word_cnt']
+		# F : Nombres d'adjectif dans les opinions
+		print("Extraction des features (Nombres d'adjectif dans les opinions)...")
+		nb_adj= features.count_adj(corpus['opinion'])
 
-	# Combiner les features C, D, E et F
-	# print("Combinasion des 4 features...")
-	# X = np.column_stack((corpus['character_cnt'].to_numpy(), corpus['word_cnt'].to_numpy(), corpus['characters_per_word'].to_numpy(), nb_adj)).reshape(-1,4)
+		# Combiner les features C, D, E et F
+		print("Combinasion des 4 features...")
+		X = np.column_stack((corpus['character_cnt'].to_numpy(), corpus['word_cnt'].to_numpy(), corpus['characters_per_word'].to_numpy(), nb_adj)).reshape(-1,4)
 
 	'''
 	Séparation des données en train et test
@@ -118,9 +138,12 @@ def main():
 	C : ComplementNB
 	'''
 	print("Entraînement...")
-	clf = LinearSVC()
-	# clf = GaussianNB() 
-	# clf = ComplementNB()
+	if args.algo == "LinearSVC":
+		clf = LinearSVC()
+	if args.algo == "GaussianNB":
+		clf = GaussianNB() 
+	if args.algo == "ComplementNB":
+		clf = ComplementNB()
 
 	algorithmes.train_with_algo(clf, X_train, X_test, y_train, y_test)
 
@@ -130,9 +153,13 @@ def main():
 
 	# Optimisation des hyperparamètres
 	print("Optimisation des hyperparamètres...")
-	param_grid =  {'C': [0.1, 0.5, 1, 10], 'dual' : [True, False]} # LinearSVC
-	# param_grid =  {'var_smoothing': [1e-09, 1e-07, 1e-05]} # GaussianNB 
-	# param_grid =  {'alpha': [0.5, 1.0, 2.0]} # ComplementNB
+	if args.algo == "LinearSVC":
+		param_grid =  {'C': [0.1, 0.5, 1, 10], 'dual' : [True, False]} # LinearSVC
+	if args.algo == "GaussianNB":
+		param_grid =  {'var_smoothing': [1e-09, 1e-07, 1e-05]} # GaussianNB 
+	if args.algo == "ComplementNB":
+		param_grid =  {'alpha': [0.5, 1.0, 2.0]} # ComplementNB
+
 	grid = GridSearchCV(clf, param_grid, cv=5, scoring='accuracy')
 	estimator = grid.fit(X, y)
 	df = pd.DataFrame(estimator.cv_results_)

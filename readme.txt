@@ -16,7 +16,8 @@ Vous avez besoin de libraires suivants pour lancer notre scripte :  sklearn, pan
 	Feature : TF-IDF
 	Algorithme : LinearSVC() avec son hyperparamètre : {'C': [0.1, 0.5, 1, 10], 'dual' : [True, False]}
 	
-		$ python3 classify.py out_data.tsv
+		pour lancer: (dans cet exemple, le fichier d'input est out_data.tsv, pré-traitement A, TFIDF comme feature et avec l'algorithme LinearSVC)
+		$ python3 classify.py out_data.tsv A TFIDF LinearSVC
 		* ce scripte va faire prétraitement et classification en même temps. Il donc prend du temps pour afficher les résultats.
 
 Pour les autres scriptes qui sont dans le notre dossier lara_chinatsu , il y a des éxplications de tous les scriptes à la fin de page de notre docmentation. 
